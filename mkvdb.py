@@ -5,7 +5,7 @@ Licensed - BSD 3 Clause (see LICENSE)
 """
 
 import asyncio
-from typing import Any, Optional, List
+from typing import Any
 
 from pymongo import MongoClient, AsyncMongoClient
 from bson import ObjectId 
@@ -37,7 +37,7 @@ class Mkv:
         self._sync_db = self._sync_client[db_name]
         self._sync_collection = self._sync_db[collection_name]
 
-    def set(self, key: str, value: Any) -> str:
+    def set(self, key: str | None, value: Any) -> str:
         """Set a key-value pair."""
         if in_async():
             async def _aset() -> str:
@@ -60,10 +60,10 @@ class Mkv:
             {"$set": {"value": value}},upsert=True,)
         return key_str
 
-    def get(self, key: Any, default: Optional[Any] = None) -> Any:
+    def get(self, key: str, default: Any | None = None) -> Any | None:
         """Get the value for a key. """
         if in_async():
-            async def _aget() -> Any:
+            async def _aget() -> Any | None:
                 doc = await self.collection.find_one({"_id": str(key)})
                 if doc is None:
                     return default
@@ -74,7 +74,7 @@ class Mkv:
             return default
         return doc.get("value", default)
 
-    def remove(self, key: Any) -> Any:
+    def remove(self, key: str) -> bool:
         """
         Remove a key-value pair."""
         if in_async():
@@ -85,22 +85,22 @@ class Mkv:
         result = self._sync_collection.delete_one({"_id": str(key)})
         return result.deleted_count > 0
 
-    def all(self) -> Any:
+    def all(self) -> list[str]:
         """Return a list of all keys in the database."""
         if in_async():
-            async def _aall() -> List[str]:
-                keys: List[str] = []
+            async def _aall() -> list[str]:
+                keys: list[str] = []
                 cursor = self.collection.find({}, {"_id": 1})
                 async for doc in cursor:
                     keys.append(doc["_id"])
                 return keys
             return _aall()
-        keys: List[str] = []
+        keys: list[str] = []
         for doc in self._sync_collection.find({}, {"_id": 1}):
             keys.append(doc["_id"])
         return keys
 
-    def purge(self) -> Any:
+    def purge(self) -> bool:
         """Remove all key-value pairs from the database."""
         if in_async():
             async def _apurge() -> bool:
@@ -110,7 +110,7 @@ class Mkv:
         self._sync_collection.delete_many({})
         return True
 
-    def close(self) -> Any:
+    def close(self) -> None:
         """Close the underlying MongoDB clients."""
         if in_async():
             async def _aclose() -> None:
@@ -119,5 +119,4 @@ class Mkv:
             return _aclose()
         asyncio.run(self._async_client.close())
         self._sync_client.close()
-        return None
 
