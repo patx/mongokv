@@ -8,7 +8,10 @@ import asyncio
 from typing import Any
 
 from pymongo import MongoClient, AsyncMongoClient
-from bson import ObjectId 
+from bson import ObjectId
+
+
+MISSING = object()
 
 
 def in_async() -> bool:
@@ -43,7 +46,7 @@ class Mkv:
             async def _aset() -> str:
                 if key is None:
                     new_id = str(ObjectId())
-                    await self.collection.insert_one({"_id": new_id, 
+                    await self.collection.insert_one({"_id": new_id,
                         "value": value})
                     return new_id
                 key_str = str(key)
@@ -60,19 +63,23 @@ class Mkv:
             {"$set": {"value": value}},upsert=True,)
         return key_str
 
-    def get(self, key: str, default: Any | None = None) -> Any | None:
-        """Get the value for a key. """
+    def get(self, key: str, default: Any = MISSING) -> Any:
+        """Get the value for a key."""
         if in_async():
-            async def _aget() -> Any | None:
+            async def _aget() -> Any:
                 doc = await self.collection.find_one({"_id": str(key)})
                 if doc is None:
+                    if default is MISSING:
+                        raise KeyError(key)
                     return default
-                return doc.get("value", default)
+                return doc.get("value")
             return _aget()
         doc = self._sync_collection.find_one({"_id": str(key)})
         if doc is None:
+            if default is MISSING:
+                raise KeyError(key)
             return default
-        return doc.get("value", default)
+        return doc.get("value")
 
     def remove(self, key: str) -> bool:
         """

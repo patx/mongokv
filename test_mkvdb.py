@@ -79,8 +79,8 @@ async def test_get_missing_returns_default_async(mkv: Mkv):
 
 @pytest.mark.asyncio
 async def test_get_missing_default_none_async(mkv: Mkv):
-    value = await mkv.get("missing")
-    assert value is None
+    with pytest.raises(KeyError):
+        await mkv.get("missing")
 
 
 @pytest.mark.asyncio
@@ -98,8 +98,8 @@ async def test_remove_existing_key_async(mkv: Mkv):
     assert removed is True
 
     # Confirm it’s gone
-    value = await mkv.get("temp")
-    assert value is None
+    with pytest.raises(KeyError):
+        await mkv.get("temp")
 
 
 @pytest.mark.asyncio
@@ -161,7 +161,28 @@ async def test_close_does_not_throw_async(mkv: Mkv):
     # Don't assert behavior after close (Motor generally allows it but it's not required)
 
 
+@pytest.mark.asyncio
+async def test_get_missing_default_none_explicit_async(mkv: Mkv):
+    value = await mkv.get("missing", default=None)
+    assert value is None
+
+
+@pytest.mark.asyncio
+async def test_get_missing_raises_keyerror_async(mkv: Mkv):
+    with pytest.raises(KeyError):
+        await mkv.get("missing")
+        
+        
 # ---------- Sync tests (dualmethod behavior) ----------
+
+def test_sync_get_missing_raises_keyerror(mkv_sync: Mkv):
+    with pytest.raises(KeyError):
+        mkv_sync.get("missing")
+
+def test_sync_get_missing_default_none_explicit(mkv_sync: Mkv):
+    value = mkv_sync.get("missing", default=None)
+    assert value is None
+    
 
 def test_sync_set_and_get(mkv_sync: Mkv):
     mkv_sync.set("foo", "bar")
@@ -178,13 +199,14 @@ def test_sync_remove_and_purge(mkv_sync: Mkv):
     mkv_sync.set("a", 1)
     mkv_sync.set("b", 2)
 
-    # Remove one key
     removed = mkv_sync.remove("a")
     assert removed is True
-    assert mkv_sync.get("a") is None
+
+    with pytest.raises(KeyError):
+        mkv_sync.get("a")
+
     assert mkv_sync.get("b") == 2
 
-    # Purge everything
     purged = mkv_sync.purge()
     assert purged is True
     assert mkv_sync.all() == []
