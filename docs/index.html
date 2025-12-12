@@ -155,7 +155,7 @@
         <li>Stores any BSON-serializable Python object as the value</li>
         <li>Automatically generates IDs when you don&rsquo;t care about the key</li>
       </ul>
-      <p>Think of it as: <em>&ldquo;I am a lazy programmer and I just want <code>set</code> and <code>get</code> over Mongo.&rdquo;</em></p>
+      <p>Think of it as: <em>&ldquo;I am a lazy programmer and I just want <code>set</code> and <code>get</code> over Mongo.&rdquo;</em> or Mongo as a dict instead of a database.</p>
     </section>
 
     <section class="section" style="border: 0px;">
@@ -252,35 +252,6 @@ async def main():
 asyncio.run(main())</code></pre>
     </section>
 
-    <section class="section" style="border: 0px;">
-      <h3>When is it sync vs async?</h3>
-      <p>The library uses:</p>
-      <pre><code class="language-python">def in_async() -&gt; bool:
-    try:
-        asyncio.get_running_loop()
-        return True
-    except RuntimeError:
-        return False</code></pre>
-      <ul>
-        <li>If there is a running event loop, methods like <code>set</code>, <code>get</code>, etc. return <strong>coroutines</strong>.</li>
-        <li>If there is no running loop, they execute synchronously.</li>
-      </ul>
-      <p>Examples:</p>
-      <pre><code class="language-python"># Sync context
-db = Mkv("mongodb://localhost:27017")
-db.set("x", 1)               # OK
-value = db.get("x")          # OK
-
-# Async context
-async def foo():
-    db = Mkv("mongodb://localhost:27017")
-    await db.set("x", 1)     # must await
-    value = await db.get("x")
-
-# Don’t do this in async code:
-db.set("x", 1)   # returns a coroutine, but you never await it</code></pre>
-    </section>
-
     <section class="section api-heading" style="border: 0px;">
       <h2>API Reference</h2>
     </section>
@@ -324,7 +295,7 @@ db.set("x", 1)   # returns a coroutine, but you never await it</code></pre>
 
       <h4>Parameters</h4>
       <ul>
-        <li><code>key</code> (<code>Any</code> or <code>None</code>):
+        <li><code>key</code> (<code>str</code> or <code>None</code>):
           <ul>
             <li>If not <code>None</code>: converted to <code>str(key)</code> and used as <code>_id</code>.</li>
             <li>If <code>None</code>: a new <code>ObjectId()</code> is generated and used as <code>_id</code>.</li>
@@ -351,25 +322,47 @@ new_id = await db.set(None, {"foo": "bar"})</code></pre>
 
       <h4>Behavior</h4>
       <ul>
-        <li><strong>Sync</strong>: executes immediately, returns the stored value or <code>default</code> if not found.</li>
-        <li><strong>Async</strong>: returns a coroutine; awaiting it yields the stored value or <code>default</code>.</li>
+        <li><strong>Sync</strong>: executes immediately.</li>
+        <li><strong>Async</strong>: returns a coroutine; awaiting it yields the result.</li>
+        <li><strong>Missing keys</strong>:
+          <ul>
+            <li>If <code>default</code> is <em>not</em> provided, a missing key raises <code>KeyError</code>.</li>
+            <li>If <code>default</code> <em>is</em> provided (even <code>None</code>), that value is returned when missing.</li>
+          </ul>
+        </li>
       </ul>
 
       <h4>Parameters</h4>
       <ul>
-        <li><code>key</code> (<code>Any</code>): Key to look up (converted to <code>str(key)</code> for <code>_id</code>).</li>
-        <li><code>default</code> (<code>Any</code>, default <code>None</code>): Value to return if the key does not exist.</li>
+        <li><code>key</code> (<code>str</code>): Key to look up (converted to <code>str(key)</code> for <code>_id</code>).</li>
+        <li><code>default</code> (<code>Any</code>, optional): Fallback to return if the key does not exist. If omitted, missing keys raise <code>KeyError</code>.</li>
       </ul>
 
       <h4>Returns</h4>
-      <p>The stored value, or <code>default</code> if no document exists for that key.</p>
+      <p>The stored value. If the key is missing, returns <code>default</code> if provided, otherwise raises <code>KeyError</code>.</p>
 
       <h4>Examples (sync)</h4>
-      <pre><code class="language-python">user = db.get("user:1", default={})
-missing = db.get("nope", default="N/A")  # -&gt; "N/A"</code></pre>
+      <pre><code class="language-python"># strict (dict-like)
+try:
+    user = db.get("user:1")
+except KeyError:
+    user = None
+
+# fallback behavior
+user = db.get("user:1", default={})
+missing = db.get("nope", default="N/A")   # -&gt; "N/A"
+none_ok = db.get("nope", default=None)    # -&gt; None</code></pre>
 
       <h4>Examples (async)</h4>
-      <pre><code class="language-python">user = await db.get("user:1", default=None)</code></pre>
+      <pre><code class="language-python"># strict (dict-like)
+try:
+    user = await db.get("user:1")
+except KeyError:
+    user = None
+
+# fallback behavior
+user = await db.get("user:1", default={})
+none_ok = await db.get("nope", default=None)</code></pre>
     </section>
 
     <section class="section">
@@ -384,7 +377,7 @@ missing = db.get("nope", default="N/A")  # -&gt; "N/A"</code></pre>
 
       <h4>Parameters</h4>
       <ul>
-        <li><code>key</code> (<code>Any</code>): Key to remove (converted to <code>str(key)</code> for <code>_id</code>).</li>
+        <li><code>key</code> (<code>str</code>): Key to remove (converted to <code>str(key)</code> for <code>_id</code>).</li>
       </ul>
 
       <h4>Returns</h4>
@@ -398,7 +391,7 @@ if deleted:
       <h4>Examples (async)</h4>
       <pre><code class="language-python">deleted = await db.remove("user:1")</code></pre>
     </section>
-
+    
     <section class="section">
       <h3><code>all</code></h3>
       <p>List all keys (all <code>_id</code> values) in the collection.</p>
@@ -410,7 +403,7 @@ if deleted:
       </ul>
 
       <h4>Returns</h4>
-      <p><code>List[str]</code>: All keys currently stored.</p>
+      <p><code>list[str]</code>: All keys currently stored.</p>
 
       <h4>Examples (sync)</h4>
       <pre><code class="language-python">keys = db.all()
@@ -471,6 +464,35 @@ print(keys)  # -&gt; ["user:1", "note:abc", ...]</code></pre>
       <p>Closing is optional in short-lived scripts, but recommended in long-running apps and tests.</p>
     </section>
 
+    <section class="section">
+      <h3>When is it sync vs async?</h3>
+      <p>The library uses:</p>
+      <pre><code class="language-python">def in_async() -&gt; bool:
+    try:
+        asyncio.get_running_loop()
+        return True
+    except RuntimeError:
+        return False</code></pre>
+      <ul>
+        <li>If there is a running event loop, methods like <code>set</code>, <code>get</code>, etc. return <strong>coroutines</strong>.</li>
+        <li>If there is no running loop, they execute synchronously.</li>
+      </ul>
+      <p>Examples:</p>
+      <pre><code class="language-python"># Sync context
+db = Mkv("mongodb://localhost:27017")
+db.set("x", 1)               # OK
+value = db.get("x")          # OK
+
+# Async context
+async def foo():
+    db = Mkv("mongodb://localhost:27017")
+    await db.set("x", 1)     # must await
+    value = await db.get("x")
+
+# Don’t do this in async code:
+db.set("x", 1)   # returns a coroutine, but you never await it</code></pre>
+    </section>
+    
     <section class="section">
       <h3>Error Handling</h3>
       <p>The current implementation doesn&rsquo;t wrap MongoDB errors – any connection or operation issue will bubble up as a PyMongo/AsyncMongo exception. Typical things you might see:</p>

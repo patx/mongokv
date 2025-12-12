@@ -49,19 +49,17 @@ class Mkv:
                     await self.collection.insert_one({"_id": new_id,
                         "value": value})
                     return new_id
-                key_str = str(key)
-                await self.collection.update_one({"_id": key_str},
+                await self.collection.update_one({"_id": str(key)},
                     {"$set": {"value": value}}, upsert=True,)
-                return key_str
+                return str(key)
             return _aset()
         if key is None:
             new_id = str(ObjectId())
             self._sync_collection.insert_one({"_id": new_id, "value": value})
             return new_id
-        key_str = str(key)
-        self._sync_collection.update_one({"_id": key_str},
+        self._sync_collection.update_one({"_id": str(key)},
             {"$set": {"value": value}},upsert=True,)
-        return key_str
+        return str(key)
 
     def get(self, key: str, default: Any = MISSING) -> Any:
         """Get the value for a key."""
