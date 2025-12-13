@@ -1,5 +1,3 @@
-# tests/test_mkvdb.py
-
 import os
 import uuid
 

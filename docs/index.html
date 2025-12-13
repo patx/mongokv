@@ -194,6 +194,7 @@
         <li>Automatically generates IDs when you don&rsquo;t care about the key</li>
         <li>Fully tested. MongoDB handles locking, durability, and concurrency.</li>
         <li>This project is intentionally small, stable, and boring. Breaking changes are avoided</li>
+        <li>mongoKV is not a cache or a Redis replacement — it’s a simple, durable KV API on top of MongoDB</li>
       </ul>
       <p>Think of it as: <em>&ldquo;I am a lazy programmer and I just want <code>set</code> and <code>get</code> over Mongo.&rdquo;</em> or Mongo as a dict instead of a database.</p>
     </section>
@@ -207,14 +208,23 @@
 
     <section class="section" style="border: 0px;">
       <h3>Core Concepts</h3>
+
       <p>Each key is stored as a single MongoDB document:</p>
       <pre><code class="language-json">{
   "_id": "&lt;str(key)&gt;",
   "value": &lt;your_data&gt;
 }</code></pre>
+
       <ul>
-        <li>Keys are always stored as strings (<code>str(key)</code>), but you can pass any object that has a sensible <code>str()</code>.</li>
+        <li>Keys are always stored as strings (<code>str(key)</code>), but you can pass any object with a sensible <code>str()</code>.</li>
         <li>Values must be BSON-serializable (anything PyMongo can store: dicts, lists, ints, strings, datetimes, etc.).</li>
+        <li>
+          This is a normal MongoDB collection. You can always access the same data
+          directly using PyMongo as your needs grow — no migrations required.
+        </li>
+        <li>
+          Safe across threads, processes, and ASGI workers — MongoDB handles locking and atomicity.
+        </li>
         <li>
           The library auto-detects whether it&rsquo;s running inside an
           <code>asyncio</code> event loop:
@@ -224,8 +234,10 @@
           </ul>
         </li>
       </ul>
-      <p>Same methods, two modes.</p>
+
+      <p>Same methods, two modes. Start simple, grow into MongoDB when you need more.</p>
     </section>
+
 
     <section class="section" style="border: 0px;">
       <h3>Quickstart</h3>
