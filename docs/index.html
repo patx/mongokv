@@ -2,12 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>mongoKV — User Guide &amp; API Reference</title>
+  <title>mongoKV – Tiny Redis-style Key-Value Store for MongoDB (Python)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <!-- highlight.js -->
+  <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/github.min.css">
+  <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+  <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/languages/python.min.js"></script>
+  <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/languages/bash.min.js"></script>
+  <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/languages/json.min.js"></script>
 
+<script defer>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("pre code").forEach(el => hljs.highlightElement(el));
+  });
+</script>
   <style>
     :root {
       --bg: #f5f5f5;
@@ -15,8 +31,8 @@
       --muted: #6b7280;
       --accent: #24663c;
       --border: #e5e7eb;
-      --code-bg: #111827;
-      --code-fg: #e5e7eb;
+      --code-bg: #c4cfc6;
+      --code-fg: black;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -55,11 +71,18 @@
     .logo {
      font-family: 'Pacifico', cursive;
      color: var(--accent);
+     letter-spacing: 3px;
     }
     
     .subtitle {
       color: var(--muted);
       margin: 0 0 12px;
+    }
+
+    .pronounce {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 400;
     }
 
     a {
@@ -83,7 +106,7 @@
     code {
       font-family: var(--mono);
       font-size: 0.9em;
-      background: #e5e7eb;
+      background: var(--border);
       padding: 0.1em 0.3em;
       border-radius: 4px;
     }
@@ -105,9 +128,15 @@
       border-radius: 0;
     }
 
+    pre code.hljs,
+    .hljs {
+      background: var(--code-bg) !important;
+      color: var(--code-fg) !important;
+    }
+
     .section {
       margin-bottom: 32px;
-      border: dotted 1px;
+      border-left: 3px solid var(--border);
       padding: 10px;
     }
 
@@ -143,7 +172,7 @@
 <body>
   <div class="page">
     <header>
-      <h1><span class="logo">mongoKV</span> <span class="subtitle" style="font-size:16px;">/ˈmɑːŋɡoʊ kiː ˈvæljuː/</span></h1>
+      <h1><span class="logo">mongoKV</span> <span class="pronounce">/ˈmɑːŋɡoʊ kiː ˈvæljuː/</span></h1>
       <p class="subtitle">Tiny async/sync key–value store on top of MongoDB.</p>
       <p class="tagline">
         <a href="https://github.com/patx/mongokv" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -159,10 +188,12 @@
       <h2>User Guide</h2>
       <p><code>mongoKV</code> is a tiny key–value store wrapper around MongoDB.</p>
       <ul class="callout-list">
-        <li>One collection, one document per key</li>
+        <li>One collection per instance, one document per key</li>
         <li>Works synchronously and asynchronously with the same API</li>
-        <li>Stores any BSON-serializable Python object as the value</li>
+        <li>Stores any BSON-serializable Python object as the value, keys are strings</li>
         <li>Automatically generates IDs when you don&rsquo;t care about the key</li>
+        <li>Fully tested. MongoDB handles locking, durability, and concurrency.</li>
+        <li>This project is intentionally small, stable, and boring. Breaking changes are avoided</li>
       </ul>
       <p>Think of it as: <em>&ldquo;I am a lazy programmer and I just want <code>set</code> and <code>get</code> over Mongo.&rdquo;</em> or Mongo as a dict instead of a database.</p>
     </section>
