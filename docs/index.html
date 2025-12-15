@@ -522,21 +522,8 @@ print(keys)  # -&gt; ["user:1", "note:abc", ...]</code></pre>
       <ul>
         <li>If there is a running event loop, methods like <code>set</code>, <code>get</code>, etc. return <strong>coroutines</strong>.</li>
         <li>If there is no running loop, they execute synchronously.</li>
+        <li>If you do not await your method calls in an async context there will be an error because your a returning a non-awaited coroutine.<li>
       </ul>
-      <p>Examples:</p>
-      <pre><code class="language-python"># Sync context
-db = Mkv("mongodb://localhost:27017")
-db.set("x", 1)               # OK
-value = db.get("x")          # OK
-
-# Async context
-async def foo():
-    db = Mkv("mongodb://localhost:27017")
-    await db.set("x", 1)     # must await
-    value = await db.get("x")
-
-# Don’t do this in async code:
-db.set("x", 1)   # returns a coroutine, but you never await it</code></pre>
     </section>
     
     <section class="section">
