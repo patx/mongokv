@@ -5,7 +5,7 @@ backed by PyMongo that provides a dead-simple Redis-like API (`set`, `get`, etc)
 
 ### Usage
 
-```
+```python
 >>> from mongokv import Mkv
 
 >>> db = Mkv('mongodb://localhost:27071')
@@ -18,7 +18,7 @@ backed by PyMongo that provides a dead-simple Redis-like API (`set`, `get`, etc)
 
 ### Install
 
-```
-pip3 install mongokv
+```bash
+$ pip3 install mongokv
 ```
 
