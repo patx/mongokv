@@ -3,6 +3,7 @@ import uuid
 
 import pytest
 import pytest_asyncio
+import pymongo
 
 from mongokv import Mkv
 
@@ -225,3 +226,29 @@ def test_sync_close_does_not_raise(mkv_sync: Mkv):
     mkv_sync.set("k", "v")
     mkv_sync.close()  # Should not raise
 
+# ---------- Module-level cleanup ----------
+
+def teardown_module(module):
+    """
+    Clean up all test collections from the database after all tests have run.
+    """
+    client = None
+    try:
+        # Use a direct pymongo connection for cleanup
+        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        db = client["test_mkvdb"]
+
+        # Check if server is available
+        client.admin.command('ping')
+
+        # Drop all collections created during tests
+        for collection_name in db.list_collection_names():
+            if collection_name.startswith("test_kv_"):
+                db.drop_collection(collection_name)
+    except pymongo.errors.ConnectionFailure:
+        # If we can't connect, there's nothing to clean up.
+        # This allows tests to pass even if Mongo is not running.
+        pass
+    finally:
+        if client:
+            client.close()
